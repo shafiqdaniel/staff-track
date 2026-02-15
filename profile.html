@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Staff Track | Profile</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <h1>Staff Track – My Profile</h1>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="container">
+
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <img src="ncer-logo.png" alt="NCER Logo" class="sidebar-logo">
+            </div>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="availability.html">Staff Availability</a>
+            <a href="staff.html">Staff Management</a>
+            <a href="report.html">Reports</a>
+            <a href="user-management.html">User Management</a>
+            <a href="profile.html" class="active">My Profile</a>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div class="section-title">
+                <h2>Account Information</h2>
+            </div>
+
+            <div class="profile-card">
+                <div class="profile-header">
+                    <div class="profile-avatar">
+                        <i class="fas fa-user-circle"></i>
+                    </div>
+                </div>
+
+                <div class="profile-details">
+                    <div class="detail-row">
+                        <label>Full Name</label>
+                        <p id="profFullname">Loading...</p>
+                    </div>
+                    <div class="detail-row">
+                        <label>Email Address</label>
+                        <p id="profEmail">Loading...</p>
+                    </div>
+                    <div class="detail-row">
+                        <label>Department / Unit</label>
+                        <p id="profUnit">Loading...</p>
+                    </div>
+                    <div class="detail-row">
+                        <label>Account Role</label>
+                        <p id="profRole"><span class="badge">Admin</span></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.2/firebase-app.js";
+        import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.1.2/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.1.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCOxGlMtNCPXfd8_vAuIBfUgz1Fsn_Tr7Q",
+            authDomain: "stafftrack-16a87.firebaseapp.com",
+            projectId: "stafftrack-16a87",
+            storageBucket: "stafftrack-16a87.firebasestorage.app",
+            messagingSenderId: "555632662062",
+            appId: "1:555632662062:web:7dd32f29027ff248e631bf"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        onAuthStateChanged(auth, async (user) => {
+            if (!user) {
+                window.location.href = "login.html";
+            } else {
+                // Fetch User Details
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+                if (userDoc.exists()) {
+                    const data = userDoc.data();
+                    document.getElementById("profFullname").innerText = data.fullname || "-";
+                    document.getElementById("profEmail").innerText = user.email || "-";
+                    document.getElementById("profUnit").innerText = data.unit || "-";
+                    document.getElementById("profRole").innerHTML = `<span class="status-badge" style="background:#00479e; color:white;">${data.role}</span>`;
+                }
+            }
+        });
+
+        window.logout = async function () {
+            await signOut(auth);
+            window.location.href = "login.html";
+        }
+    </script>
+
+    <style>
+        .profile-card {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            max-width: 600px;
+            margin: 20px auto;
+        }
+
+        .profile-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .profile-avatar i {
+            font-size: 80px;
+            color: #e60012;
+        }
+
+        .detail-row {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+
+        .detail-row label {
+            display: block;
+            color: #666;
+            font-size: 13px;
+            margin-bottom: 5px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .detail-row p {
+            font-size: 18px;
+            color: #333;
+            font-weight: bold;
+        }
+    </style>
+</body>
+
+</html>

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Staff Track | Register Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="register-page">
+
+    <div class="register-container">
+        <img src="ncer-logo.png" alt="NCER Logo" class="auth-logo">
+        <h1>Staff Track</h1>
+        <p>Register New Account</p>
+
+        <form id="registerForm">
+
+            <div class="form-group">
+                <label for="fullname">Full Name</label>
+                <input type="text" id="fullname" placeholder="Enter your full name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" placeholder="email@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="role">Account Role</label>
+                <select id="role" required>
+                    <option value="" disabled selected>Select Role</option>
+                    <option value="Staff">Staff</option>
+                    <option value="Admin">Administrator</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="unit">Department/Unit</label>
+                <select id="unit" required>
+                    <option value="" disabled selected>Select Unit</option>
+                    <option value="Media Reputation Management">Media Reputation Management</option>
+                    <option value="Events Management">Events Management</option>
+                    <option value="Creative & Branding Management">Creative & Branding Management</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Minimum 6 characters" required>
+            </div>
+
+            <button type="submit" class="register-btn">Register Admin</button>
+
+        </form>
+
+        <div class="login-link">
+            Already have an account? <a href="login.html">Login</a>
+        </div>
+
+        <div class="footer-text">
+            © 2026 Staff Track System
+        </div>
+    </div>
+
+    <!-- SUCCESS POPUP -->
+    <div id="successPopup" class="success-popup">
+        <div class="popup-content">
+            <h3>Registration Successful!</h3>
+            <p>Redirecting to login page...</p>
+            <button onclick="window.location.href='login.html'">Go to Login</button>
+        </div>
+    </div>
+
+    <!-- ===== FIREBASE SCRIPT ===== -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.2/firebase-app.js";
+        import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/9.1.2/firebase-auth.js";
+        import { getFirestore, setDoc, doc } from "https://www.gstatic.com/firebasejs/9.1.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCOxGlMtNCPXfd8_vAuIBfUgz1Fsn_Tr7Q",
+            authDomain: "stafftrack-16a87.firebaseapp.com",
+            projectId: "stafftrack-16a87",
+            storageBucket: "stafftrack-16a87.firebasestorage.app",
+            messagingSenderId: "555632662062",
+            appId: "1:555632662062:web:7dd32f29027ff248e631bf"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Register Form
+        const registerForm = document.getElementById("registerForm");
+
+        registerForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const fullname = document.getElementById("fullname").value.trim();
+            const email = document.getElementById("email").value.trim();
+            const unit = document.getElementById("unit").value;
+            const role = document.getElementById("role").value;
+            const password = document.getElementById("password").value;
+
+            // --- VALIDATION ---
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert("Please enter a valid email address (e.g., name@example.com)");
+                return;
+            }
+
+            if (password.length < 6) {
+                alert("Password must be at least 6 characters long.");
+                return;
+            }
+
+            if (!fullname || !unit || !role) {
+                alert("Please fill in all required fields.");
+                return;
+            }
+            // ------------------
+
+            try {
+                const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Save user data to Firestore
+                await setDoc(doc(db, "users", user.uid), {
+                    fullname: fullname,
+                    email: email,
+                    role: role,
+                    unit: unit,
+                    createdAt: new Date()
+                });
+
+                // Show Success Popup
+                document.getElementById("successPopup").style.display = "flex"; // Show popup
+
+            } catch (error) {
+                alert("Error registering: " + error.message);
+            }
+        });
+    </script>
+
+</body>
+
+</html>

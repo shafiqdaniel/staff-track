@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Staff Track | Staff Availability</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <!-- HEADER -->
+    <div class="header">
+        <h1>Staff Track – Staff Availability</h1>
+        <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="container">
+
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <img src="ncer-logo.png" alt="NCER Logo" class="sidebar-logo">
+            </div>
+            <a href="dashboard.html">Dashboard</a>
+            <a href="availability.html" class="active">Staff Availability</a>
+            <a href="staff.html">Staff Management</a>
+            <a href="report.html">Reports</a>
+            <a href="user-management.html">User Management</a>
+        </div>
+
+        <!-- MAIN CONTENT -->
+        <div class="main-content">
+            <div class="section-title">
+                <h2>Staff Availability Status</h2>
+            </div>
+
+            <div id="loading">Loading availability data...</div>
+
+            <div class="table-container" id="availContainer" style="display:none;">
+                <table id="availabilityTable">
+                    <thead>
+                        <tr>
+                            <th class="col-name">Name</th>
+                            <th class="col-unit">Unit</th>
+                            <th class="col-status">Status</th>
+                            <th>Location / Remarks</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Firebase data will appear here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- ===== FIREBASE SCRIPT ===== -->
+        <script type="module">
+            import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.2/firebase-app.js";
+            import { getFirestore, collection, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/9.1.2/firebase-firestore.js";
+            import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/9.1.2/firebase-auth.js";
+
+            const firebaseConfig = {
+                apiKey: "AIzaSyCOxGlMtNCPXfd8_vAuIBfUgz1Fsn_Tr7Q",
+                authDomain: "stafftrack-16a87.firebaseapp.com",
+                projectId: "stafftrack-16a87",
+                storageBucket: "stafftrack-16a87.firebasestorage.app",
+                messagingSenderId: "555632662062",
+                appId: "1:555632662062:web:7dd32f29027ff248e631bf"
+            };
+
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const auth = getAuth(app);
+
+            const table = document.getElementById("availabilityTable")?.getElementsByTagName('tbody')[0];
+            const loading = document.getElementById("loading");
+
+            onAuthStateChanged(auth, user => {
+                if (!user) {
+                    window.location.href = "login.html";
+                    return;
+                }
+                if (table) listenToAvailability();
+            });
+
+            function listenToAvailability() {
+                const d = new Date();
+                const todayStr = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
+
+                // Fetch and filter locally for today to avoid index requirements
+                const q = query(collection(db, "availability"), orderBy("createdAt", "desc"));
+
+                onSnapshot(q, (snapshot) => {
+                    table.innerHTML = "";
+                    let hasData = false;
+
+                    snapshot.forEach(doc => {
+                        const data = doc.data();
+                        hasData = true;
+
+                        let statusClass = "status-available";
+                        if (data.status === "Unavailable" || data.status === "On Leave" || data.status === "Medical" || data.status === "Outstation") {
+                            statusClass = "status-unavailable";
+                        } else if (data.status === "Remote" || data.status === "Meeting") {
+                            statusClass = "status-remote";
+                        } else if (data.status === "In Office") {
+                            statusClass = "status-available";
+                        }
+
+                        table.innerHTML += `
+                        <tr>
+                            <td class="col-name">${data.name}</td>
+                            <td class="col-unit">${data.unit || data.department || "-"}</td>
+                            <td class="col-status"><span class="${statusClass}">${data.status}</span></td>
+                            <td>${data.remarks || "-"}</td>
+                            <td>${data.date}</td>
+                        </tr>
+                    `;
+                    });
+
+                    if (!hasData) {
+                        loading.innerText = "No activity records found.";
+                        loading.style.display = "block";
+                        document.getElementById("availContainer").style.display = "none";
+                    } else {
+                        document.getElementById("availContainer").style.display = "block";
+                        loading.style.display = "none";
+                    }
+                }, (error) => {
+                    if (loading) loading.innerText = "Error loading data: " + error.message;
+                    console.error("Availability Error:", error);
+                });
+            }
+
+            window.logout = async function () {
+                try {
+                    await signOut(auth);
+                    window.location.href = "login.html";
+                } catch (error) {
+                    console.error("Logout Error:", error);
+                    alert("Error logging out: " + error.message);
+                }
+            }
+        </script>
+</body>
+
+</html>

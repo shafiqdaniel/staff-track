@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Staff Track | Admin Login</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="login-page">
+
+    <div class="login-container">
+        <img src="ncer-logo.png" alt="NCER Logo" class="auth-logo">
+        <h1>Staff Track</h1>
+        <p>Administrator Login</p>
+
+        <form id="loginForm">
+
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" placeholder="admin@stafftrack.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" placeholder="Enter your password" required>
+            </div>
+
+            <button type="submit" class="login-btn">Login</button>
+
+        </form>
+
+        <div class="register-link">
+            Don’t have an account? <a href="register.html">Register as Admin</a>
+        </div>
+
+        <div class="footer-text">
+            © 2026 Staff Track System
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.1.2/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.1.2/firebase-auth.js";
+        import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/9.1.2/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCOxGlMtNCPXfd8_vAuIBfUgz1Fsn_Tr7Q",
+            authDomain: "stafftrack-16a87.firebaseapp.com",
+            projectId: "stafftrack-16a87",
+            storageBucket: "stafftrack-16a87.firebasestorage.app",
+            messagingSenderId: "555632662062",
+            appId: "1:555632662062:web:7dd32f29027ff248e631bf"
+        };
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        // Login Form
+        const loginForm = document.getElementById("loginForm");
+
+        loginForm.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const email = document.getElementById("email").value.trim();
+            const password = document.getElementById("password").value;
+
+            // --- VALIDATION ---
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                alert("Please enter a valid email address.");
+                return;
+            }
+            // ------------------
+
+            try {
+                const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                const user = userCredential.user;
+
+                // Check Role in Firestore
+                const userDoc = await getDoc(doc(db, "users", user.uid));
+
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    if (userData.role === "Admin") {
+                        window.location.href = "dashboard.html";
+                    } else {
+                        await signOut(auth);
+                        alert("Access Denied: Only administrators can access the web panel.");
+                    }
+                } else {
+                    await signOut(auth);
+                    alert("User record not found. Access Denied.");
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("Invalid email or password: " + error.message);
+            }
+        });
+    </script>
+
+</body>
+
+</html>
